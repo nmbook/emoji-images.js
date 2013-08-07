@@ -14,18 +14,39 @@
   }
 }(this, function () {
     var emojis = {{data}},
-        test = /\:[a-z0-9_\-\+]+\:/g;
+        test = /(<a href="[^"]*)?\:[a-z0-9_\-\+]+\:/g;
 
-    function emoji(someString, url, size) {
-        return someString.replace(test, function (match) {
-            if (emojis.indexOf(match) !== -1) {
-                var name = String(match).slice(1, -1);
-                return '<img class="emoji" title=":' + name + ':" alt="' + name + '" src="' + url + '/' + encodeURIComponent(name) + '.png"' + (size ? (' height="' + size + '"') : '') + ' />';
-            } else {
+    function emoji(someString, url, size, attrs) {
+        return someString.replace(test, function (match, urlMatch) {
+            if (urlMatch || emojis.indexOf(match) === -1) {
                 return match;
+            } else {
+                var result = '';
+                var name = String(match).slice(1, -1);
+                if (!attrs) {
+                    attrs = {};
+                }
+                attrs['class'] = 'emoji';
+                attrs.alt = match;
+                attrs.title = match;
+                attrs.draggable = 'true';
+                attrs.ondragstart = "event.dataTransfer.setData('Text', '" + match + "');";
+                if (size && size >= 0) {
+                    attrs.height = size;
+                }
+                attrs.src = url + '/' + encodeURIComponent(name) + '.png';
+                
+                for (var key in attrs) {
+                    if (attrs.hasOwnProperty(key)) {
+                        result += key + '="' + attrs[key] + '" ';
+                    }
+                }
+                return '<img ' + result + '/>'
             }
         });
     };
+
+    emoji.list = emojis;
 
     return emoji;
 }));
